@@ -1,9 +1,8 @@
 # Kiểm thử tạo mới 1 booking
 
 ## Scenario: Tạo mới 1 booking thành công
-
-* Đọc nội dung body từ file "data/DataBookingAPI/createBooking.json" và lưu vào key "scenario:bodyCreateBooking"
-* Call api tạo mới booking
+* Đọc nội dung body từ file "data/DataBookingAPI/CreateBookingDataValid.json" và lưu vào key "scenario:bodyCreateBooking"
+* Gửi request tạo mới booking với payload lấy từ key "scenario:bodyCreateBooking"
 * Verify response sau khi tạo mới booking thành công với json body được lưu ở key "scenario:bodyCreateBooking"
 * Lấy "bookingid" từ response tạo mới booking và lưu vào biến "scenario:bookingId"
 
@@ -26,3 +25,7 @@
           | checkoutNull               | 500            | false           |
           | addtionalneedsEmptyString  | 200            | true            |
           | addtionalneedsNull         | 200            | true            |
+
+
+## Scenario: Sử dụng concept
+* Tạo mới 1 booking thành công

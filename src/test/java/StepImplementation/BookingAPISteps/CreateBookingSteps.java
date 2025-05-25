@@ -1,8 +1,8 @@
 package StepImplementation.BookingAPISteps;
 
 import StepImplementation.Common.GetValueFromDataStore;
+import StepImplementation.Common.Helper;
 import StepImplementation.Common.JsonUtil;
-import StepImplementation.Common.ReadFile;
 import StepImplementation.Common.SaveValueToDataStore;
 import Utils.API.BookingAPI.CreateBookingAPI;
 import com.thoughtworks.gauge.Step;
@@ -13,21 +13,52 @@ import org.json.JSONObject;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.testng.Assert;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 
 import static io.restassured.RestAssured.given;
 
 public class CreateBookingSteps {
 
+    private static final String URL_FILEJSONBODY = "data/DataBookingAPI/createBooking.json";
+
     CreateBookingAPI createBookingAPI = new CreateBookingAPI();
 
     Response responseCreateBooking;
 
-    @Step("Call api tạo mới booking")
-    public void sendCreateBookingAPI() throws IOException {
-        responseCreateBooking = given().spec(createBookingAPI.getRequestCreateBooking()).post();
+    private Response sendCreateBookingRequestWithBody(String body) {
+        return given()
+                .spec(createBookingAPI.getRequestCreateBookingWithBody(body))
+                .post();
+    }
+
+
+    private void compareResponseIfNeeded(Response response) {
+        String responseString = response.asString();
+        String valueBooking = JsonUtil.parseJsonByKey(responseString, "booking");
+
+        JSONObject actualBooking = new JSONObject(valueBooking);
+        Object expectedBodyObject = GetValueFromDataStore.getValueFromKey("scenario:bodyCreateBooking");
+        JSONObject expectedBooking = new JSONObject(expectedBodyObject.toString());
+
+        JSONAssert.assertEquals(expectedBooking, actualBooking, false);
+    }
+
+    private void assertStatusCode(Response response, int expectedStatus) {
+        Assert.assertEquals(response.getStatusCode(), expectedStatus, "Sai status code.");
+    }
+
+    private void saveBookingIdIfSuccess(Response response) {
+        if (response.getStatusCode() == 200) {
+            SaveValueToDataStore.extractKeyAndSave(response, "bookingid", "scenario:bookingId");
+        }
+    }
+
+    @Step("Gửi request tạo mới booking với payload lấy từ key <key>")
+    public void sendCreateBookingAPI(String key) throws IOException {
+        Object body = GetValueFromDataStore.getValueFromKey(key);
+        String bodyString = body.toString();
+
+        responseCreateBooking = given().spec(createBookingAPI.getRequestCreateBookingWithBody(bodyString)).post();
         System.out.println(responseCreateBooking.asPrettyString());
         Assert.assertEquals(responseCreateBooking.statusCode(), 200);
     }
@@ -59,47 +90,22 @@ public class CreateBookingSteps {
             int expectedStatus = Integer.parseInt(row.getCell("expectedStatus"));
             boolean compareResponse = Boolean.parseBoolean(row.getCell("compareResponse"));
 
-            // Đọc JSON body từ file tương ứng với bodyCase
-            final String fileURL = "data/DataBookingAPI/createBooking.json";
-            File bodyFile = new File(fileURL);
-            JSONObject requestBody = ReadFile.readFileToJsonObject(bodyFile, Charset.defaultCharset());
-            JSONObject bodyObject = requestBody.getJSONObject(bodyCase);
-            String bodyString = bodyObject.toString();
+            String bodyString = Helper.loadRequestBodyToString(URL_FILEJSONBODY, bodyCase);
 
-            // Lưu body vào ScenarioDataStore để dùng trong bước so sánh
-            SaveValueToDataStore.saveValueToKey(bodyObject, "scenario:bodyCreateBooking");
+            SaveValueToDataStore.saveValueToKey(bodyString, "scenario:bodyCreateBooking");
 
-            // Gửi request tạo booking
-            responseCreateBooking = given()
-                    .spec(createBookingAPI.getRequestCreateBookingWithBody(bodyString)) // sử dụng request body
-                    .post();
+            responseCreateBooking = sendCreateBookingRequestWithBody(bodyString);
 
-            // Log response
             System.out.println("========== Response [" + bodyCase + "] ==========");
             System.out.println(responseCreateBooking.asPrettyString());
 
-            // Kiểm tra status code
-            Assert.assertEquals(responseCreateBooking.getStatusCode(), expectedStatus,
-                    "Status code sai cho case: " + bodyCase);
-//
-            // So sánh response nếu được yêu cầu và thành công
+            assertStatusCode(responseCreateBooking, expectedStatus);
+
             if (expectedStatus == 200 && compareResponse) {
-                String responseString = responseCreateBooking.asString();
-                String valueBooking = JsonUtil.parseJsonByKey(responseString, "booking");
-
-                JSONObject actualBooking = new JSONObject(valueBooking);
-
-                Object expectedBodyObject = GetValueFromDataStore.getValueFromKey("scenario:bodyCreateBooking");
-                JSONObject expectedBooking = new JSONObject(expectedBodyObject.toString());
-
-                JSONAssert.assertEquals(expectedBooking, actualBooking, false);
+                compareResponseIfNeeded(responseCreateBooking);
             }
 
-            // Nếu thành công, lưu bookingId
-            if (responseCreateBooking.getStatusCode() == 200) {
-                SaveValueToDataStore.extractKeyAndSave(responseCreateBooking, "bookingid", "scenario:bookingId");
-            }
+            saveBookingIdIfSuccess(responseCreateBooking);
         }
     }
-
 }
