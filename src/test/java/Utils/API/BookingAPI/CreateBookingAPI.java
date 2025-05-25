@@ -2,15 +2,14 @@ package Utils.API.BookingAPI;
 
 import Utils.Base.BasePathBookingAPI;
 import Utils.Base.BaseRequest;
-import Utils.Common.ReadFile;
-import io.cucumber.guice.ScenarioScoped;
+import StepImplementation.Common.ReadFile;
+import io.restassured.RestAssured;
 import io.restassured.specification.RequestSpecification;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
-@ScenarioScoped
 public class CreateBookingAPI {
 
     private String body;
@@ -32,5 +31,14 @@ public class CreateBookingAPI {
 
         return requestCreateBooking;
     }
+
+    public RequestSpecification getRequestCreateBookingWithBody(String body) {
+
+        requestCreateBooking = BaseRequest.getBaseRequest()
+                .basePath(BasePathBookingAPI.PATHCREATEBOOKING)
+                .body(body);
+        return requestCreateBooking;
+    }
+
 
 }

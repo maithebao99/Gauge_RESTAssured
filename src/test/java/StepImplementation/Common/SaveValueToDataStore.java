@@ -1,4 +1,4 @@
-package StepImplementation.CommonSteps;
+package StepImplementation.Common;
 
 import com.thoughtworks.gauge.Step;
 import com.thoughtworks.gauge.datastore.ScenarioDataStore;
@@ -8,7 +8,11 @@ import io.restassured.response.Response;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-public class SaveValue {
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
+
+public class SaveValueToDataStore {
 
     @Step("Lưu <value> vào biến <fullKey>")
     public static void saveValueToKey(Object value, String fullKey) {
@@ -92,6 +96,14 @@ public class SaveValue {
             }
         }
         return null;
+    }
+
+    //Read json file to String and save to variable
+    @Step("Đọc nội dung body từ file <filePath> và lưu vào key <biến>")
+    public void readFileToStringAndSave(String filePath, String key) throws IOException {
+        File bodyFile = new File(filePath);
+        JSONObject body = ReadFile.readFileToJsonObject(bodyFile, Charset.defaultCharset());
+        SaveValueToDataStore.saveValueToKey(body, key);
     }
 
 }

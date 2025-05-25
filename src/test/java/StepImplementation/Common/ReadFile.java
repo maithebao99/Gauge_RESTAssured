@@ -1,6 +1,5 @@
-package Utils.Common;
+package StepImplementation.Common;
 
-import io.cucumber.guice.ScenarioScoped;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -8,7 +7,6 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 
-@ScenarioScoped
 public class ReadFile {
 
     //Read json from Json Object to String
